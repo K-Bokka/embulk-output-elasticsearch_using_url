@@ -25,6 +25,8 @@ module Embulk
           "retry_on_failure" => config.param("retry_on_failure", :integer, default: 5),
           "before_template_name" => config.param("before_template_name", :string, default: nil),
           "before_template" => config.param("before_template", :hash, default: nil),
+          "routing_keys" => config.param("routing_keys", :array, default: nil),
+          "routing_format" => config.param("routing_format", :string, default: nil),
         }
         task['time_value'] = Time.now.strftime('%Y.%m.%d.%H.%M.%S')
         task['index'] = Time.now.strftime(task['index'])
@@ -108,6 +110,8 @@ module Embulk
         @bulk_actions = task["bulk_actions"]
         @array_columns = task["array_columns"]
         @retry_on_failure = task["retry_on_failure"]
+        @routing_keys = task["routing_keys"]
+        @routing_format = task["routing_format"]
         @mode = task["mode"]
         @index = self.class.get_index(task)
 
@@ -125,6 +129,7 @@ module Embulk
           meta = {}
           meta[action] = { _index: @index, _type: @index_type }
           meta[action][:_id] = generate_id(@id_format, hash, @id_keys) unless @id_keys.nil?
+          meta[action][:_routing] = generate_id(@routing_format, hash, @routing_keys) unless @routing_keys.nil?
           source = generate_array(hash)
           @bulk_message << meta
           @bulk_message << source
